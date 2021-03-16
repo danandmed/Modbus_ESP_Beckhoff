@@ -1,0 +1,89 @@
+Sync(IN:= Sync.Q = FALSE, PT:= TSync, Q=> , ET=> );
+tsyncLED(IN:= tsyncLED.Q=FALSE, PT:= tpressyncLED, Q=> , ET=> );
+
+	IF Sync.ET < Sync.PT / 2 THEN
+		bSync:=TRUE;
+		ELSE
+		bSync:=FALSE;
+	END_IF
+	
+	IF tsyncLED.ET < tsyncLED.PT / 2 THEN
+		bSyncLED:=TRUE;
+		ELSE
+		bSyncLED:=FALSE;
+	END_IF
+	
+	IF bSyncLED THEN
+	   adatawcoils[1]:=TRUE;
+	   //adatawcoils[2]:=TRUE;
+	   //adatawcoils[5]:=TRUE;
+	   //adatawcoils[6]:=TRUE;
+	   //adatawcoils[7]:=TRUE;
+	   ELSE
+	   adatawcoils[1]:=FALSE;
+	   //adatawcoils[2]:=FALSE;
+	   //adatawcoils[5]:=FALSE;
+	   //adatawcoils[6]:=FALSE;
+	   //adatawcoils[7]:=FALSE;
+	END_IF
+	
+	CASE state OF
+		
+	0: IF NOT bBUSY THEN		
+	   FB_Leituras.bExecute:=FALSE;
+	   FB_WCoils.bExecute:=FALSE;
+	   idx:=1;
+	   state:=1;
+	    END_IF
+1:
+FB_Leituras(
+	sIPAddr:= '192.168.1.119', // IP DO ESP
+	nTCPPort:= 502, 
+	nUnitID:= 1, 
+	nQuantity:= wqtd, 
+	nMBAddr:= waddr, 
+	cbLength:= SIZEOF(adataRead), 
+	pDestAddr:= ADR(adataRead), 
+	bExecute:= NOT bSync , 
+	tTimeout:= T#100MS, 
+	bBusy=> bBUSY, 
+	bError=> berrorread, 
+	nErrId=> , 
+	cbRead=> cbread);
+	
+	IF NOT bBUSY THEN		
+	   FB_Leituras.bExecute:=FALSE;
+	   FB_WCoils.bExecute:=FALSE;
+	   state:=2;
+	   END_IF
+	   
+2..9:	
+	
+FB_WCoils(
+	sIPAddr:= '192.168.1.119', 
+	nTCPPort:= 502, 
+	nUnitID:= 1, 
+	nQuantity:= wqdtw, 
+	nMBAddr:= waddrw + idx, 
+	cbLength:= SIZEOF(adatawcoils[idx]), 
+	pSrcAddr:= ADR(adatawcoils[idx]), 
+	bExecute:= bSync, 
+	tTimeout:= timeout, 
+	bBusy=> bBUSY, 
+	bError=> berrorWrite, 
+	nErrId=> );
+	
+	IF NOT bBUSY THEN		
+	   FB_Leituras.bExecute:=FALSE;
+	   FB_WCoils.bExecute:=FALSE;
+	   idx:=idx+1;
+	   IF state <= 9 THEN
+	   state:=state+1;
+	   ELSE
+	   state:=0;
+	   END_IF   
+	 END_IF
+10:
+state:=0;
+	
+		END_CASE

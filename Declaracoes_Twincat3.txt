@@ -1,0 +1,25 @@
+PROGRAM Modbus_TCP
+VAR
+	adataRead: ARRAY[1..10] OF WORD; // LEITURAS DO MODBUS TCP
+	adatawcoils: ARRAY[1..10] OF BOOL; // ESCRITAS NO MODBUS TCP
+	timeout: TIME := T#100MS;
+	TSync: TIME := T#10MS;
+	tpressyncLED: TIME := T#4S;
+	FB_Leituras: FB_MBReadInputRegs;
+	wqtd: WORD := 9;
+	waddr: WORD := 200;
+	bSync: BOOL;
+	berrorread: BOOL;
+	cbread: UDINT;
+	Sync: TON;
+	wqdtw: WORD := 1;
+	waddrw: WORD := 99;
+	berrorWrite: BOOL;
+	bEnable: BOOL;
+	FB_WCoils: FB_MBWriteCoils;
+	state: INT;
+	bBUSY: BOOL;
+	tsyncLED: TON;
+	bSyncLED: BOOL;
+	idx: INT := 1;
+END_VAR
